@@ -204,6 +204,13 @@ main {
     transform: scale(1.05);
 }
 
+.sticker.selected {
+    outline: 3px solid #b57aff;
+    outline-offset: 2px;
+    box-shadow: 0 0 15px rgba(181, 122, 255, 0.5);
+    z-index: 100;
+}
+
 /* CAROUSEL */
 .carousel {
     display: flex;
@@ -741,4 +748,115 @@ main {
     font-size: 12px;
     color: #999;
     font-style: italic;
+}
+
+/* ============================= */
+/* RESPONSIVIDADE (MOBILE) */
+/* ============================= */
+
+@media (max-width: 850px) {
+    body {
+        overflow: auto;
+        height: auto;
+    }
+
+    header {
+        padding: 0 15px;
+        height: auto;
+        padding-top: 15px;
+        padding-bottom: 15px;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .header-actions {
+        width: 100%;
+    }
+
+    .header-actions>div {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        flex: 1;
+        justify-content: center;
+        padding: 14px;
+        font-size: 14px;
+    }
+
+    .btn-nav {
+        padding: 15px;
+        font-size: 14px;
+    }
+
+    .btn-icon {
+        width: 44px;
+        height: 44px;
+    }
+
+    .action-footer button {
+        padding: 16px;
+        font-size: 15px;
+    }
+
+    main {
+        flex-direction: column;
+        height: auto;
+        padding: 10px;
+        gap: 15px;
+    }
+
+    .viewer-section {
+        height: 60vh;
+        min-height: 400px;
+    }
+
+    .panel {
+        width: 100%;
+        height: auto;
+        overflow: visible;
+        padding: 20px;
+    }
+
+    .carousel {
+        height: 85px;
+        min-height: 85px;
+    }
+
+    .help-content {
+        padding: 20px;
+        width: 95%;
+    }
+
+    .help-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .help-content h3 {
+        font-size: 18px;
+        margin-bottom: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 18px;
+    }
+
+    .logo i {
+        font-size: 24px;
+    }
+
+    .btn-help {
+        width: 24px;
+        height: 24px;
+    }
+
+    .btn-nav span {
+        display: none;
+        /* Esconder texto de anterior/proxima se muito pequeno */
+    }
 }

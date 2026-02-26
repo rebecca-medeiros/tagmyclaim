@@ -17,6 +17,7 @@ let arrastando = null;
 let offsetX = 0;
 let offsetY = 0;
 let tamanhoNovoSet = false;
+let stickerSelecionado = null; // 🔥 controla qual sticker está sendo editado no momento
 
 img.onload = () => {
     if (tamanhoNovoSet && img.clientWidth > 0) {
@@ -218,6 +219,22 @@ function restaurarMarcacoes() {
     });
 
     contador = dados.length + 1;
+    stickerSelecionado = null;
+}
+
+function selecionarSticker(sticker) {
+    if (stickerSelecionado) {
+        stickerSelecionado.classList.remove("selected");
+    }
+    stickerSelecionado = sticker;
+    stickerSelecionado.classList.add("selected");
+}
+
+function deselecionarTudo() {
+    if (stickerSelecionado) {
+        stickerSelecionado.classList.remove("selected");
+        stickerSelecionado = null;
+    }
 }
 
 /* ============================= */
@@ -242,6 +259,13 @@ viewer.addEventListener("mousemove", function (e) {
     }
 
     const rect = viewer.getBoundingClientRect();
+
+    // Nova lógica: se o mouse estiver sobre um sticker já existente, some com a prévia
+    const itemSobMouse = document.elementFromPoint(e.clientX, e.clientY);
+    if (itemSobMouse && itemSobMouse.classList.contains("sticker") && itemSobMouse.id !== "preview") {
+        if (preview) preview.style.display = "none";
+        return;
+    }
 
     if (!preview) {
         preview = document.createElement("div");
@@ -302,12 +326,19 @@ viewer.addEventListener("click", function (e) {
     const sticker = criarSticker(x, y, contador);
 
     viewer.appendChild(sticker);
+    selecionarSticker(sticker); // Seleciona o novo sticker automaticamente
 
     if (!marcacoes[index]) marcacoes[index] = [];
-
     marcacoes[index].push({ x, y, numero: contador });
 
     contador++;
+});
+
+// Clicar fora deseleciona o sticker ativo
+viewer.addEventListener("mousedown", (e) => {
+    if (e.target === viewer || e.target === img) {
+        deselecionarTudo();
+    }
 });
 
 function criarSticker(x, y, numero) {
@@ -326,35 +357,49 @@ function criarSticker(x, y, numero) {
 
     sticker.innerText = numero;
 
-    /* DRAG */
+    /* DRAG (Mouse) */
     sticker.addEventListener("mousedown", function (e) {
-        arrastando = sticker;
-        const sRect = sticker.getBoundingClientRect();
-        offsetX = e.clientX - sRect.left;
-        offsetY = e.clientY - sRect.top;
+        selecionarSticker(sticker);
+        iniciarArrasto(e.clientX, e.clientY, sticker);
         e.stopPropagation();
     });
 
+    /* DRAG (Touch) */
+    sticker.addEventListener("touchstart", function (e) {
+        selecionarSticker(sticker);
+        const touch = e.touches[0];
+        iniciarArrasto(touch.clientX, touch.clientY, sticker);
+        e.stopPropagation();
+        e.preventDefault();
+    }, { passive: false });
+
     sticker.addEventListener("click", function (e) {
+        selecionarSticker(sticker);
         e.stopPropagation();
     });
 
     return sticker;
 }
 
+function iniciarArrasto(clientX, clientY, elemento) {
+    arrastando = elemento;
+    const sRect = elemento.getBoundingClientRect();
+    offsetX = clientX - sRect.left;
+    offsetY = clientY - sRect.top;
+}
+
 /* ============================= */
 /* ARRASTAR */
 /* ============================= */
 
-document.addEventListener("mousemove", function (e) {
-
+function mover(clientX, clientY) {
     if (!arrastando) return;
 
     const vRect = viewer.getBoundingClientRect();
     const iRect = img.getBoundingClientRect();
 
-    let x = e.clientX - vRect.left - offsetX;
-    let y = e.clientY - vRect.top - offsetY;
+    let x = clientX - vRect.left - offsetX;
+    let y = clientY - vRect.top - offsetY;
 
     // Constranger dentro da imagem
     const minX = iRect.left - vRect.left;
@@ -369,11 +414,20 @@ document.addEventListener("mousemove", function (e) {
     arrastando.style.top = y + "px";
 
     atualizarEstadoPosicao();
-});
+}
 
-document.addEventListener("mouseup", function () {
-    arrastando = null;
-});
+document.addEventListener("mousemove", (e) => mover(e.clientX, e.clientY));
+
+document.addEventListener("touchmove", (e) => {
+    if (arrastando) {
+        const touch = e.touches[0];
+        mover(touch.clientX, touch.clientY);
+        e.preventDefault();
+    }
+}, { passive: false });
+
+document.addEventListener("mouseup", () => arrastando = null);
+document.addEventListener("touchend", () => arrastando = null);
 
 function atualizarEstadoPosicao() {
 
@@ -561,9 +615,43 @@ async function salvarZip(listaIndices, defaultName) {
 
 document.addEventListener("keydown", function (e) {
     if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.target.tagName === "TEXTAREA") {
-        return; // não aciona atalhos se estiver digitando num input
+        return;
     }
 
+    // Se tiver um sticker selecionado, as setas e backspace agem sobre ele
+    if (stickerSelecionado) {
+        const passo = e.shiftKey ? 10 : 1;
+        let x = parseFloat(stickerSelecionado.style.left);
+        let y = parseFloat(stickerSelecionado.style.top);
+
+        switch (e.key) {
+            case "ArrowUp":
+                stickerSelecionado.style.top = (y - passo) + "px";
+                atualizarEstadoPosicao();
+                e.preventDefault();
+                return;
+            case "ArrowDown":
+                stickerSelecionado.style.top = (y + passo) + "px";
+                atualizarEstadoPosicao();
+                e.preventDefault();
+                return;
+            case "ArrowLeft":
+                stickerSelecionado.style.left = (x - passo) + "px";
+                atualizarEstadoPosicao();
+                e.preventDefault();
+                return;
+            case "ArrowRight":
+                stickerSelecionado.style.left = (x + passo) + "px";
+                atualizarEstadoPosicao();
+                e.preventDefault();
+                return;
+            case "Escape":
+                deselecionarTudo();
+                return;
+        }
+    }
+
+    // Atalhos normais quando nada (ou o corpo) está selecionado
     switch (e.key) {
         case "ArrowRight":
             proxima();
