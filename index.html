@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TagMyClaim ✨ Numerador de Photocard</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Baloo+2:wght@500;700&family=Poppins:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Phosphor Icons (for better UI) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">
+            <i class="ph-fill ph-cards"></i>
+            <h1>TagMyClaim</h1>
+            <button class="btn-help" id="openHelp" title="Como usar?">
+                <i class="ph-bold ph-question"></i>
+            </button>
+        </div>
+        <div class="header-actions">
+            <!-- Modo Normal -->
+            <div id="botoes-normais" style="display: flex; gap: 12px;">
+                <button class="btn-secondary" onclick="alternarModoSelecao()"
+                    title="Entrar no modo de seleção de imagens">
+                    <i class="ph-bold ph-check-square"></i> Selecionar para Baixar
+                </button>
+                <button class="btn-primary" onclick="salvarTodas()"
+                    title="Baixar todas as imagens numeradas de uma vez">
+                    <i class="ph-bold ph-download-simple"></i> Tudo (A)
+                </button>
+            </div>
+
+            <!-- Modo Seleção Ativo -->
+            <div id="botoes-selecao" style="display: none; gap: 12px;">
+                <button class="btn-secondary" onclick="alternarModoSelecao()" title="Cancelar seleção">
+                    Cancelar
+                </button>
+                <button class="btn-primary" onclick="salvarSelecionadas()"
+                    title="Baixar apenas as imagens selecionadas">
+                    <i class="ph-bold ph-download-simple"></i> Baixar Seleção
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="viewer-section">
+            <div class="viewer" id="viewer">
+                <div class="empty-state" id="empty-state">
+                    <i class="ph-duotone ph-images"></i>
+                    <h2>Nenhuma imagem selecionada</h2>
+                    <p>Faça o upload das suas imagens para começar a numerar! 💕</p>
+                </div>
+                <img id="img">
+            </div>
+            <div class="carousel" id="carousel" style="display: none;"></div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <h3><i class="ph-fill ph-faders"></i> Opções</h3>
+            </div>
+
+            <div class="form-group upload-group">
+                <label for="upload" class="file-label" id="fileLabel">
+                    <i class="ph-bold ph-upload-simple"></i> Escolher Imagens
+                </label>
+                <input type="file" id="upload" multiple accept="image/*" style="display: none;">
+            </div>
+
+            <div class="form-group">
+                <label>Renomear imagem atual <span class="opcional">(editável)</span>:</label>
+                <input type="text" id="nomeArquivo" placeholder="ex: jisung_selca">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Cor do Sticker:</label>
+                    <div class="color-picker-wrapper">
+                        <input type="color" id="cor" value="#ffb6f9">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Fonte:</label>
+                    <div class="select-wrapper">
+                        <select id="fonte">
+                            <option value="Fredoka">Fredoka</option>
+                            <option value="Baloo 2">Baloo 2</option>
+                            <option value="Poppins">Poppins</option>
+                        </select>
+                        <i class="ph-bold ph-caret-down"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-actions">
+                <label>Tamanho do Sticker:</label>
+                <div class="button-row">
+                    <button class="btn-icon" onclick="diminuir()" title="Diminuir tamanho do sticker"><i
+                            class="ph-bold ph-minus"></i></button>
+                    <button class="btn-icon" onclick="aumentar()" title="Aumentar tamanho do sticker"><i
+                            class="ph-bold ph-plus"></i></button>
+                </div>
+            </div>
+
+            <div class="navigation-grid">
+                <button class="btn-nav" onclick="anterior()" title="Ir para imagem anterior"><i
+                        class="ph-bold ph-caret-left"></i> Anterior</button>
+                <button class="btn-nav" onclick="proxima()" title="Ir para próxima imagem">Próxima <i
+                        class="ph-bold ph-caret-right"></i></button>
+            </div>
+
+            <div class="action-footer">
+                <button class="btn-undo" onclick="desfazer()"><i class="ph-bold ph-arrow-u-up-left"></i> Desfazer
+                    (Z)</button>
+                <button class="btn-save" onclick="baixar()"><i class="ph-bold ph-floppy-disk"></i> Salvar atual
+                    (S)</button>
+            </div>
+
+            <div class="creator-credit">
+                <span>by </span>
+                <a href="https://github.com/rebecca-medeiros" target="_blank">
+                    rebecca-medeiros <i class="ph-fill ph-github-logo"></i>
+                </a>
+            </div>
+
+        </div>
+    </main>
+
+    <div class="help-modal" id="helpModal">
+        <div class="help-content">
+            <button class="close-help" id="closeHelp"><i class="ph-bold ph-x"></i></button>
+            <h3><i class="ph-fill ph-info"></i> Guia Rápido: TagMyClaim</h3>
+            <div class="help-grid">
+                <div class="help-item">
+                    <h4><i class="ph-fill ph-upload-simple"></i> Como começar?</h4>
+                    <p>Arraste suas fotos para o centro ou clique na mensagem de "Nenhuma imagem" para carregar seus
+                        photocards.</p>
+                </div>
+                <div class="help-item">
+                    <h4><i class="ph-fill ph-cursor-click"></i> Numerando</h4>
+                    <p>Clique em qualquer lugar da foto para colocar um número. O contador sobe automaticamente!</p>
+                </div>
+                <div class="help-item">
+                    <h4><i class="ph-fill ph-arrows-out-cardinal"></i> Ajustes</h4>
+                    <p>Arraste um número já colocado para mudar de posição. Use os botões ➕ e ➖ para mudar o tamanho.
+                    </p>
+                </div>
+                <div class="help-item">
+                    <h4><i class="ph-fill ph-keyboard"></i> Atalhos</h4>
+                    <p><b>Z:</b> Desfazer | <b>S:</b> Salvar atual | <b>A:</b> Salvar tudo em ZIP | <b>Setas:</b>
+                        Navegar</p>
+                </div>
+            </div>
+            <div class="help-footer">
+                <p>O prefixo do ZIP ajuda a organizar as fotos baixadas como <i>meunome_1.png</i>,
+                    <i>meunome_2.png</i>...
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
