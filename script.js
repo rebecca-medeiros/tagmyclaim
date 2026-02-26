@@ -435,7 +435,16 @@ function baixar() {
     // Esconder possível preview de sticker solto
     if (preview) preview.style.display = "none";
 
-    html2canvas(divViewer, { backgroundColor: null }).then(canvas => {
+    const vRect = divViewer.getBoundingClientRect();
+    const iRect = img.getBoundingClientRect();
+
+    html2canvas(divViewer, {
+        backgroundColor: null,
+        x: iRect.left - vRect.left,
+        y: iRect.top - vRect.top,
+        width: iRect.width,
+        height: iRect.height
+    }).then(canvas => {
         const nomeFinal = document.getElementById("nomeArquivo").value || `photocard_${index + 1}`;
         const nomeArquivoTemp = nomeFinal.toLowerCase().endsWith(".png") ? nomeFinal : `${nomeFinal}.png`;
 
@@ -512,7 +521,16 @@ async function salvarZip(listaIndices, defaultName) {
 
                 // Dar um tempo para renderizar
                 setTimeout(() => {
-                    html2canvas(divViewer, { backgroundColor: null }).then(canvas => {
+                    const vRect = divViewer.getBoundingClientRect();
+                    const iRect = img.getBoundingClientRect();
+
+                    html2canvas(divViewer, {
+                        backgroundColor: null,
+                        x: iRect.left - vRect.left,
+                        y: iRect.top - vRect.top,
+                        width: iRect.width,
+                        height: iRect.height
+                    }).then(canvas => {
                         const dataURL = canvas.toDataURL("image/png");
                         const base64Data = dataURL.replace(/^data:image\/(png|jpg);base64,/, "");
 
