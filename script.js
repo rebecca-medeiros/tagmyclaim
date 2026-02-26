@@ -39,23 +39,31 @@ document.getElementById("upload").addEventListener("change", function (e) {
 function processarArquivos(arquivos) {
     if (!arquivos || arquivos.length === 0) return;
 
-    const novasImagens = Array.from(arquivos).filter(f => f.type.startsWith('image/'));
-    if (novasImagens.length === 0) return;
+    const novas = Array.from(arquivos).filter(f => f.type.startsWith('image/'));
+    if (novas.length === 0) return;
 
-    imagens = novasImagens;
-    index = 0;
-    marcacoes = {};
-    nomesArquivos = {};
-    selecionados = new Set();
+    const eraVazio = imagens.length === 0;
+
+    // Anexa as novas imagens ao invés de substituir
+    imagens = [...imagens, ...novas];
+
+    if (eraVazio) {
+        index = 0;
+        marcacoes = {};
+        nomesArquivos = {};
+        tamanhoNovoSet = true;
+        carregarImagem();
+    }
+
     modoSelecao = false;
     document.getElementById("carousel").classList.remove("modo-selecao");
-    tamanhoNovoSet = true;
     renderCarousel();
-    carregarImagem();
     atualizarBotoesAcao();
 
     const label = document.getElementById("fileLabel");
-    label.innerHTML = `<i class="ph-bold ph-check-circle"></i> ${imagens.length} imagem(ns) selecionada(s)`;
+    const textoImagem = imagens.length === 1 ? "imagem" : "imagens";
+    label.innerHTML = `<i class="ph-bold ph-check-circle"></i> ${imagens.length} ${textoImagem} no total`;
+    label.title = "Clique para adicionar mais fotos a este lote";
 }
 
 document.getElementById("empty-state").addEventListener("click", () => {
@@ -126,8 +134,61 @@ function renderCarousel() {
     imagens.forEach((file, i) => {
         const item = document.createElement("div");
         item.className = "carousel-item";
+        item.draggable = true; // Habilita o arraste
+
         if (i === index) item.classList.add("active");
         if (modoSelecao && selecionados.has(i)) item.classList.add("selected");
+
+        /* EVENTOS DE ARRASTE (REORDENAR) */
+        item.addEventListener("dragstart", (e) => {
+            e.dataTransfer.setData("text/plain", i);
+            item.classList.add("dragging");
+        });
+
+        item.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            const rect = item.getBoundingClientRect();
+            const relX = e.clientX - rect.left;
+
+            item.classList.remove("drag-over-left", "drag-over-right");
+            if (relX < rect.width / 2) {
+                item.classList.add("drag-over-left");
+            } else {
+                item.classList.add("drag-over-right");
+            }
+        });
+
+        item.addEventListener("dragleave", () => {
+            item.classList.remove("drag-over-left", "drag-over-right");
+        });
+
+        item.addEventListener("drop", (e) => {
+            e.preventDefault();
+            const rect = item.getBoundingClientRect();
+            const relX = e.clientX - rect.left;
+            let destinoIdx = i;
+
+            // Se soltar na metade direita, o destino é a próxima posição
+            if (relX > rect.width / 2) {
+                destinoIdx = i + 1;
+            }
+
+            item.classList.remove("drag-over-left", "drag-over-right");
+            const origemIdx = parseInt(e.dataTransfer.getData("text/plain"));
+
+            // Ajuste logico: se a origem vem antes do destino, o índice de inserção muda
+            let idxFinal = destinoIdx;
+            if (origemIdx < destinoIdx) idxFinal--;
+
+            if (origemIdx !== idxFinal) {
+                reordenarImagens(origemIdx, idxFinal);
+            }
+        });
+
+        item.addEventListener("dragend", () => {
+            item.classList.remove("dragging");
+            item.classList.remove("drag-over-left", "drag-over-right");
+        });
 
         const imgThumbnail = document.createElement("img");
         const url = URL.createObjectURL(file);
@@ -145,6 +206,17 @@ function renderCarousel() {
                 alternarSelecao(i);
             };
             item.appendChild(indicator);
+        } else {
+            // Botão de excluir (só aparece fora do modo de seleção)
+            const btnRemover = document.createElement("div");
+            btnRemover.className = "btn-remover-item";
+            btnRemover.innerHTML = '<i class="ph-bold ph-trash"></i>';
+            btnRemover.title = "Remover esta imagem";
+            btnRemover.onclick = (e) => {
+                e.stopPropagation();
+                removerImagem(i);
+            };
+            item.appendChild(btnRemover);
         }
 
         item.onclick = () => {
@@ -158,6 +230,98 @@ function renderCarousel() {
         item.appendChild(imgThumbnail);
         carousel.appendChild(item);
     });
+}
+
+function removerImagem(i) {
+    if (imagens.length <= 1) {
+        alert("Você precisa ter pelo menos uma imagem no lote!");
+        return;
+    }
+
+    if (!confirm("Tem certeza que deseja remover esta imagem? As marcações nela serão perdidas.")) return;
+
+    // Remover dos arrays
+    imagens.splice(i, 1);
+
+    // Ajustar estados (shift de chaves)
+    const novasMarcacoes = {};
+    const novosNomes = {};
+    const novosSelecionados = new Set();
+
+    Object.keys(marcacoes).forEach(k => {
+        const key = parseInt(k);
+        if (key < i) novasMarcacoes[key] = marcacoes[key];
+        else if (key > i) novasMarcacoes[key - 1] = marcacoes[key];
+    });
+
+    Object.keys(nomesArquivos).forEach(k => {
+        const key = parseInt(k);
+        if (key < i) novosNomes[key] = nomesArquivos[key];
+        else if (key > i) novosNomes[key - 1] = nomesArquivos[key];
+    });
+
+    selecionados.forEach(val => {
+        if (val < i) novosSelecionados.add(val);
+        else if (val > i) novosSelecionados.add(val - 1);
+    });
+
+    marcacoes = novasMarcacoes;
+    nomesArquivos = novosNomes;
+    selecionados = novosSelecionados;
+
+    // Ajustar index atual
+    if (i === index) {
+        if (index >= imagens.length) index = imagens.length - 1;
+    } else if (i < index) {
+        index--;
+    }
+
+    renderCarousel();
+    carregarImagem();
+
+    const label = document.getElementById("fileLabel");
+    const textoImagem = imagens.length === 1 ? "imagem" : "imagens";
+    label.innerHTML = `<i class="ph-bold ph-check-circle"></i> ${imagens.length} ${textoImagem} no total`;
+}
+
+function reordenarImagens(origem, destino) {
+    if (origem === destino) return;
+
+    salvarEstadoAtual();
+
+    // Reordenar array de imagens (imutável para cálculo)
+    const novasImagens = [...imagens];
+    const [movida] = novasImagens.splice(origem, 1);
+    novasImagens.splice(destino, 0, movida);
+
+    // Mapear antigo -> novo para os estados
+    const novoParaAntigo = Array.from({ length: imagens.length }, (_, i) => i);
+    const [idxMovido] = novoParaAntigo.splice(origem, 1);
+    novoParaAntigo.splice(destino, 0, idxMovido);
+
+    const novasMarcacoes = {};
+    const novosNomes = {};
+    const novosSelecionados = new Set();
+    let novoIndexAtivo = index;
+
+    novoParaAntigo.forEach((antigoIdx, novoIdx) => {
+        if (marcacoes[antigoIdx]) novasMarcacoes[novoIdx] = marcacoes[antigoIdx];
+        if (nomesArquivos[antigoIdx]) novosNomes[novoIdx] = nomesArquivos[antigoIdx];
+        if (selecionados.has(antigoIdx)) novosSelecionados.add(novoIdx);
+
+        if (antigoIdx === index) {
+            novoIndexAtivo = novoIdx; // Mantém a visualização na mesma imagem
+        }
+    });
+
+    imagens = novasImagens;
+    marcacoes = novasMarcacoes;
+    nomesArquivos = novosNomes;
+    selecionados = novosSelecionados;
+    index = novoIndexAtivo;
+
+    renderCarousel();
+    carregarImagem();
 }
 
 function alternarSelecao(i) {

@@ -75,9 +75,11 @@
             </div>
 
             <div class="form-group upload-group">
-                <label for="upload" class="file-label" id="fileLabel">
+                <label for="upload" class="file-label" id="fileLabel" title="Clique para adicionar mais fotos">
                     <i class="ph-bold ph-upload-simple"></i> Escolher Imagens
                 </label>
+                <span class="opcional" style="text-align: center; margin-top: 4px;">Adicione mais fotos a qualquer
+                    momento!</span>
                 <input type="file" id="upload" multiple accept="image/*" style="display: none;">
             </div>
 
@@ -124,10 +126,10 @@
             </div>
 
             <div class="action-footer">
-                <button class="btn-undo" onclick="desfazer()"><i class="ph-bold ph-arrow-u-up-left"></i> Desfazer
-                    (Z)</button>
-                <button class="btn-save" onclick="baixar()"><i class="ph-bold ph-floppy-disk"></i> Salvar atual
-                    (S)</button>
+                <button class="btn-undo" onclick="desfazer()" title="Desfazer (Z)"><i
+                        class="ph-bold ph-arrow-u-up-left"></i> Desfazer</button>
+                <button class="btn-save" onclick="baixar()" title="Salvar atual (S)"><i
+                        class="ph-bold ph-floppy-disk"></i> Salvar</button>
             </div>
 
             <div class="creator-credit">
