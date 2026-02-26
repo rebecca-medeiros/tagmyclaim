@@ -44,15 +44,6 @@
 4. Use os controles laterais para ajustar cores e fontes se desejar.
 5. Clique em "Baixar Tudo" para exportar seu set pronto!
 
-## 🌐 Como disponibilizar Online (Grátis)
-
-Para deixar seu **TagMyClaim** acessível para qualquer pessoa via link (ex: `rebecca.github.io/tagmyclaim`):
-
-1. **Crie um repositório no GitHub** (ex: `tagmyclaim`).
-2. **Suba os arquivos** (`index.html`, `style.css`, `script.js`) para o repositório.
-3. No GitHub, vá em **Settings** > **Pages**.
-4. Em **Branch**, selecione `main` e clique em **Save**.
-5. Aguarde alguns minutos e o GitHub fornecerá o link oficial do seu site!
 
 ---
 Feito com 💕 para a comunidade de colecionadores.
